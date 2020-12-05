@@ -4,13 +4,11 @@ import * as dynamodb from "@aws-cdk/aws-dynamodb";
 import * as lambda from "@aws-cdk/aws-lambda";
 import * as events from "@aws-cdk/aws-events";
 import * as targets from "@aws-cdk/aws-events-targets";
-import * as logs from "@aws-cdk/aws-logs";
 import * as iam from "@aws-cdk/aws-iam";
 import * as s3 from "@aws-cdk/aws-s3";
 import * as codepipeline from "@aws-cdk/aws-codepipeline";
 import * as CodePipelineAction from "@aws-cdk/aws-codepipeline-actions";
 import * as CodeBuild from "@aws-cdk/aws-codebuild";
-import * as dotenv from "dotenv";
 import * as s3deploy from "@aws-cdk/aws-s3-deployment"
 import * as cloudfront from "@aws-cdk/aws-cloudfront";
 import * as origins from "@aws-cdk/aws-cloudfront-origins";
@@ -20,7 +18,6 @@ export class CdkLollyEventStack extends cdk.Stack {
     super(scope, id, props);
 
     // The code that defines your stack goes here
-    // const api = new appsync.GraphqlApi
     const api = new appsync.CfnGraphQLApi(this, "lollyEventApi", { 
       name: "LollyEventAppsync",  
       authenticationType: "API_KEY",
@@ -30,7 +27,6 @@ export class CdkLollyEventStack extends cdk.Stack {
    new appsync.CfnApiKey(this, "AppSync2EventBridgeApiKey", {
     apiId: api.attrApiId
   });
-
 
   const apiSchema = new appsync.CfnGraphQLSchema(this, "ItemsSchema", {
     apiId: api.attrApiId,
@@ -156,10 +152,10 @@ export class CdkLollyEventStack extends cdk.Stack {
           }
         }
       }`,
-      // "Detail": "{\\\"event\\\": {\\\"hello\\\":\\\"hello world\\\"}}",
-      // "Detail": "{\\\"event\\\": {\\\"lollyPath\\\":\\\"ctx.arguments.lollyPath\\\",\\\"lollyPath\\\":\\\"ctx.arguments.lollyPath\\\"}}",
 
+      // "Detail": "{\\\"event\\\": {\\\"hello\\\":\\\"hello world\\\"}}",
       // "{\\\"event": \\\"hello world\\\"}"
+      
       responseMappingTemplate: `
         #if($ctx.error)
           $util.error($ctx.error.message, $ctx.error.type)
@@ -226,102 +222,100 @@ export class CdkLollyEventStack extends cdk.Stack {
 
     rule.addTarget(new targets.LambdaFunction(lollyLamda))
 
-    // const bucket = new s3.Bucket(this, "LollyAppBucket", {
-    //   publicReadAccess: true,
-    //   versioned: true,
-    //   websiteIndexDocument: "index.html",
-    //   websiteErrorDocument: "404.html",
-    // });
+  //   const bucket = new s3.Bucket(this, "LollyAppBucket", {
+  //     publicReadAccess: true,
+  //     versioned: true,
+  //     websiteIndexDocument: "index.html",
+  //     websiteErrorDocument: "404.html",
+  //   });
 
-    // new s3deploy.BucketDeployment(this, "todoApp-EventBridge-sns", {
-    //   sources: [s3deploy.Source.asset("../public")],
-    //   destinationBucket: bucket,
-    // })
+  //   new s3deploy.BucketDeployment(this, "todoApp-EventBridge-sns", {
+  //     sources: [s3deploy.Source.asset("../public")],
+  //     destinationBucket: bucket,
+  //   })
 
-    // new cloudfront.Distribution(this, "CldfrnDistribution", {
-    //   defaultBehavior: { origin: new origins.S3Origin(bucket) },
-    // });
+  //   new cloudfront.Distribution(this, "CldfrnDistribution", {
+  //     defaultBehavior: { origin: new origins.S3Origin(bucket) },
+  //   });
 
+  //   const outputSources = new codepipeline.Artifact();
+  //   const outputWebsite = new codepipeline.Artifact();
+
+  //   const policy = new iam.PolicyStatement();
+  //   policy.addActions('s3:*');
+  //   policy.addResources('*');
+
+  //   const pipeline = new codepipeline.Pipeline(this, "LollyPipeline", {
+  //     pipelineName: "eventLollypipeline",
+  //     restartExecutionOnUpdate: true,
+  //   });
+
+  //   pipeline.addStage({
+  //     stageName: 'Source',
+  //     actions: [
+  //       new CodePipelineAction.GitHubSourceAction({
+  //         actionName: 'Checkout',
+  //         owner: 'abdulrafayghani',
+  //         repo: 'VitualLolly-aws-event',
+  //         oauthToken: cdk.SecretValue.secretsManager('AWS_GITHUB_TOKEN'),
+  //         output: outputSources,
+  //         branch: "master"
+  //       })
+  //     ]
+  //   })
+
+  //   pipeline.addStage({
+  //     stageName: 'Build',
+  //     actions: [
+  //       new CodePipelineAction.CodeBuildAction({
+  //         actionName: 'Website',
+  //         project: new CodeBuild.PipelineProject(this, 'BuildWebsite', {
+  //           projectName: 'Website',
+  //           buildSpec : CodeBuild.BuildSpec.fromObject({
+  //             version : '0.2',
+  //             phases: {
+  //               install: {
+  //                 "runtime-versions": {
+  //                   "nodejs": 12
+  //                 },
+  //                 commands: [
+  //                   "npm install -g gatsby",
+  //                   "npm install"
+  //                 ],
+  //               },
+  //               build: {
+  //                 commands: [
+  //                   'npm run build',
+  //                 ],
+  //               },
+  //             },
+  //             artifacts: {
+  //               'base-directory': './public',   ///outputting our generated Gatsby Build files to the public directory
+  //               "files": [
+  //                 '**/*'
+  //               ]
+  //             },
+  //           })
+  //         }),
+  //         input: outputSources,
+  //         outputs: [outputWebsite],
+  //       }),
+  //     ],
+  //   })
     
-    // const outputSources = new codepipeline.Artifact();
-    // const outputWebsite = new codepipeline.Artifact();
+  //   pipeline.addStage({
+  //     stageName: "Deploy",
+  //     actions: [
+  //       // AWS CodePipeline action to deploy CRA website to S3
+  //       new CodePipelineAction.S3DeployAction({
+  //         actionName: "WebsiteDeploy",
+  //         input: outputWebsite,
+  //         bucket: bucket,
+  //       }),
+  //     ],
+  //   });
 
-    // const policy = new iam.PolicyStatement();
-    // policy.addActions('s3:*');
-    // policy.addResources('*');
-
-    // const pipeline = new codepipeline.Pipeline(this, "LollyPipeline", {
-    //   pipelineName: "eventLollypipeline",
-    //   restartExecutionOnUpdate: true,
-    // });
-
-    // pipeline.addStage({
-    //   stageName: 'Source',
-    //   actions: [
-    //     new CodePipelineAction.GitHubSourceAction({
-    //       actionName: 'Checkout',
-    //       owner: 'abdulrafayghani',
-    //       repo: 'VitualLolly-aws-event',
-    //       oauthToken: cdk.SecretValue.secretsManager('AWS_GITHUB_TOKEN'),
-    //       output: outputSources,
-    //       branch: "master"
-    //     })
-    //   ]
-    // })
-
-    // pipeline.addStage({
-    //   stageName: 'Build',
-    //   actions: [
-    //     new CodePipelineAction.CodeBuildAction({
-    //       actionName: 'Website',
-    //       project: new CodeBuild.PipelineProject(this, 'BuildWebsite', {
-    //         projectName: 'Website',
-    //         buildSpec : CodeBuild.BuildSpec.fromObject({
-    //           version : '0.2',
-    //           phases: {
-    //             install: {
-    //               "runtime-versions": {
-    //                 "nodejs": 12
-    //               },
-    //               commands: [
-    //                 "npm install -g gatsby",
-    //                 "npm install"
-    //               ],
-    //             },
-    //             build: {
-    //               commands: [
-    //                 'npm run build',
-    //               ],
-    //             },
-    //           },
-    //           artifacts: {
-    //             'base-directory': './public',   ///outputting our generated Gatsby Build files to the public directory
-    //             "files": [
-    //               '**/*'
-    //             ]
-    //           },
-    //         })
-    //       }),
-    //       input: outputSources,
-    //       outputs: [outputWebsite],
-    //     }),
-    //   ],
-    // })
-    
-    // pipeline.addStage({
-    //   stageName: "Deploy",
-    //   actions: [
-    //     // AWS CodePipeline action to deploy CRA website to S3
-    //     new CodePipelineAction.S3DeployAction({
-    //       actionName: "WebsiteDeploy",
-    //       input: outputWebsite,
-    //       bucket: bucket,
-    //     }),
-    //   ],
-    // });
-
-    // pipeline.addToRolePolicy(policy)
-    // rule.addTarget(new targets.CodePipeline(pipeline))
-
-  }
+  //   pipeline.addToRolePolicy(policy)
+  //   rule.addTarget(new targets.CodePipeline(pipeline))
+  // }
 }
