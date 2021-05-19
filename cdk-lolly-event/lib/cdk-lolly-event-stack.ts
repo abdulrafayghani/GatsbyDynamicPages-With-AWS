@@ -222,100 +222,100 @@ export class CdkLollyEventStack extends cdk.Stack {
 
     rule.addTarget(new targets.LambdaFunction(lollyLamda))
 
-  //   const bucket = new s3.Bucket(this, "LollyAppBucket", {
-  //     publicReadAccess: true,
-  //     versioned: true,
-  //     websiteIndexDocument: "index.html",
-  //     websiteErrorDocument: "404.html",
-  //   });
+    const bucket = new s3.Bucket(this, "LollyAppBucket", {
+      publicReadAccess: true,
+      versioned: true,
+      websiteIndexDocument: "index.html",
+      websiteErrorDocument: "404.html",
+    });
 
-  //   new s3deploy.BucketDeployment(this, "todoApp-EventBridge-sns", {
-  //     sources: [s3deploy.Source.asset("../public")],
-  //     destinationBucket: bucket,
-  //   })
+    new s3deploy.BucketDeployment(this, "todoApp-EventBridge-sns", {
+      sources: [s3deploy.Source.asset("../public")],
+      destinationBucket: bucket,
+    })
 
-  //   new cloudfront.Distribution(this, "CldfrnDistribution", {
-  //     defaultBehavior: { origin: new origins.S3Origin(bucket) },
-  //   });
+    new cloudfront.Distribution(this, "CldfrnDistribution", {
+      defaultBehavior: { origin: new origins.S3Origin(bucket) },
+    });
 
-  //   const outputSources = new codepipeline.Artifact();
-  //   const outputWebsite = new codepipeline.Artifact();
+    const outputSources = new codepipeline.Artifact();
+    const outputWebsite = new codepipeline.Artifact();
 
-  //   const policy = new iam.PolicyStatement();
-  //   policy.addActions('s3:*');
-  //   policy.addResources('*');
+    const policy = new iam.PolicyStatement();
+    policy.addActions('s3:*');
+    policy.addResources('*');
 
-  //   const pipeline = new codepipeline.Pipeline(this, "LollyPipeline", {
-  //     pipelineName: "eventLollypipeline",
-  //     restartExecutionOnUpdate: true,
-  //   });
+    const pipeline = new codepipeline.Pipeline(this, "LollyPipeline", {
+      pipelineName: "eventLollypipeline",
+      restartExecutionOnUpdate: true,
+    });
 
-  //   pipeline.addStage({
-  //     stageName: 'Source',
-  //     actions: [
-  //       new CodePipelineAction.GitHubSourceAction({
-  //         actionName: 'Checkout',
-  //         owner: 'abdulrafayghani',
-  //         repo: 'VitualLolly-aws-event',
-  //         oauthToken: cdk.SecretValue.secretsManager('AWS_GITHUB_TOKEN'),
-  //         output: outputSources,
-  //         branch: "master"
-  //       })
-  //     ]
-  //   })
+    pipeline.addStage({
+      stageName: 'Source',
+      actions: [
+        new CodePipelineAction.GitHubSourceAction({
+          actionName: 'Checkout',
+          owner: 'abdulrafayghani',
+          repo: 'VitualLolly-aws-event',
+          oauthToken: cdk.SecretValue.secretsManager('AWS_GITHUB_TOKEN'),
+          output: outputSources,
+          branch: "master"
+        })
+      ]
+    })
 
-  //   pipeline.addStage({
-  //     stageName: 'Build',
-  //     actions: [
-  //       new CodePipelineAction.CodeBuildAction({
-  //         actionName: 'Website',
-  //         project: new CodeBuild.PipelineProject(this, 'BuildWebsite', {
-  //           projectName: 'Website',
-  //           buildSpec : CodeBuild.BuildSpec.fromObject({
-  //             version : '0.2',
-  //             phases: {
-  //               install: {
-  //                 "runtime-versions": {
-  //                   "nodejs": 12
-  //                 },
-  //                 commands: [
-  //                   "npm install -g gatsby",
-  //                   "npm install"
-  //                 ],
-  //               },
-  //               build: {
-  //                 commands: [
-  //                   'npm run build',
-  //                 ],
-  //               },
-  //             },
-  //             artifacts: {
-  //               'base-directory': './public',   ///outputting our generated Gatsby Build files to the public directory
-  //               "files": [
-  //                 '**/*'
-  //               ]
-  //             },
-  //           })
-  //         }),
-  //         input: outputSources,
-  //         outputs: [outputWebsite],
-  //       }),
-  //     ],
-  //   })
+    pipeline.addStage({
+      stageName: 'Build',
+      actions: [
+        new CodePipelineAction.CodeBuildAction({
+          actionName: 'Website',
+          project: new CodeBuild.PipelineProject(this, 'BuildWebsite', {
+            projectName: 'Website',
+            buildSpec : CodeBuild.BuildSpec.fromObject({
+              version : '0.2',
+              phases: {
+                install: {
+                  "runtime-versions": {
+                    "nodejs": 12
+                  },
+                  commands: [
+                    "npm install -g gatsby",
+                    "npm install"
+                  ],
+                },
+                build: {
+                  commands: [
+                    'npm run build',
+                  ],
+                },
+              },
+              artifacts: {
+                'base-directory': './public',   ///outputting our generated Gatsby Build files to the public directory
+                "files": [
+                  '**/*'
+                ]
+              },
+            })
+          }),
+          input: outputSources,
+          outputs: [outputWebsite],
+        }),
+      ],
+    })
     
-  //   pipeline.addStage({
-  //     stageName: "Deploy",
-  //     actions: [
-  //       // AWS CodePipeline action to deploy CRA website to S3
-  //       new CodePipelineAction.S3DeployAction({
-  //         actionName: "WebsiteDeploy",
-  //         input: outputWebsite,
-  //         bucket: bucket,
-  //       }),
-  //     ],
-  //   });
+    pipeline.addStage({
+      stageName: "Deploy",
+      actions: [
+        // AWS CodePipeline action to deploy CRA website to S3
+        new CodePipelineAction.S3DeployAction({
+          actionName: "WebsiteDeploy",
+          input: outputWebsite,
+          bucket: bucket,
+        }),
+      ],
+    });
 
-  //   pipeline.addToRolePolicy(policy)
-  //   rule.addTarget(new targets.CodePipeline(pipeline))
-  // }
+    pipeline.addToRolePolicy(policy)
+    rule.addTarget(new targets.CodePipeline(pipeline))
+  }
 }
